@@ -1,85 +1,56 @@
 package validation
 
 import (
-	"errors"
+	"github.com/go-playground/validator/v10"
 	"github.com/goal-web/contracts"
 	"github.com/goal-web/supports/utils"
-	"strings"
 )
 
-var (
-	ValidateTypeError = errors.New("参数类型错误")
-)
+var Validator = validator.New()
 
-type Validator struct {
-	fields         contracts.Fields
-	rules          contracts.Rules
-	fieldsNamesMap map[string]string
-	isValidated    bool
-	errors         contracts.ValidatedErrors
+func Struct(data interface{}) error {
+	return Validator.Struct(data)
 }
 
-func (this *Validator) IsFail() bool {
-	return !this.IsSuccessful()
-}
-
-func (this *Validator) IsSuccessful() (result bool) {
-	if this.isValidated {
-		return len(this.errors) == 0
+func Valid(data interface{}, rules contracts.Fields) contracts.Fields {
+	switch param := data.(type) {
+	case contracts.Fields:
+		return Validator.ValidateMap(param, rules)
+	case contracts.FieldsProvider:
+		return Validator.ValidateMap(param.Fields(), rules)
 	}
 
-	defer func() { // 抛异常也就是失败了
-		if err := recover(); err != nil {
-			result = false
-		}
-	}()
-
-	this.Validate()
-
-	return len(this.errors) == 0
-}
-
-func (this *Validator) Errors() (results contracts.ValidatedErrors) {
-	if this.isValidated {
-		return this.errors
+	fields, err := utils.ConvertToFields(data)
+	if err != nil {
+		panic(Exception{
+			param:  fields,
+			errors: nil,
+			string: "unsupported parameter type",
+		})
 	}
 
-	defer func() { // 抛异常也就是失败了
-		if err := recover(); err != nil {
-			if exception, isValidateException := err.(ValidatorException); isValidateException {
-				results = exception.errors
-			}
-		}
-	}()
-
-	this.Validate()
-
-	return this.errors
+	return Validator.ValidateMap(fields, rules)
 }
 
-// Names 设置字段隐射
-func (this *Validator) Names(names map[string]string) contracts.Validator {
-	this.fieldsNamesMap = names
-	return this
+func Form(validatable contracts.Validatable) contracts.Fields {
+	return Validator.ValidateMap(validatable.Fields(), validatable.Rules())
 }
 
-func (this *Validator) Validate() contracts.Fields {
-	validatedFields := contracts.Fields{}
-	for key, value := range this.fields {
-		validatedFields[key] = value
-		if fieldCheckers, ok := this.rules[key]; ok {
-			for _, checker := range fieldCheckers {
-				if err := checker.Check(value); err != nil {
-					this.errors[key] = append(this.errors[key], strings.ReplaceAll(err.Error(), "{field}", utils.StringOr(this.fieldsNamesMap[key], key)))
-				}
-			}
-		}
+func VerifyForm(validatable contracts.Validatable) {
+	if errs := Form(validatable); len(errs) > 0 {
+		panic(NewException(validatable.Fields(), validatable.Rules()))
 	}
-	this.isValidated = true
+}
 
-	if len(this.errors) > 0 { // 有错误，抛异常
-		panic(NewValidatorException(this.fields, this.errors))
+func VerifyStruct(data interface{}) {
+	if err := Struct(data); err != nil {
+		panic(err)
 	}
+}
 
-	return validatedFields
+func Verify(data interface{}, rules contracts.Fields) {
+	if errs := Valid(data, rules); len(errs) > 0 {
+		var fields, _ = utils.ConvertToFields(data)
+		panic(NewException(fields, rules))
+	}
 }

@@ -4,28 +4,24 @@ import (
 	"github.com/goal-web/contracts"
 )
 
-type ValidatorException struct {
+type Exception struct {
 	param  contracts.Fields
-	errors contracts.ValidatedErrors
+	errors contracts.Fields
+	string
 }
 
-func NewValidatorException(param contracts.Fields, errors contracts.ValidatedErrors) ValidatorException {
-	return ValidatorException{param, errors}
+func NewException(param contracts.Fields, errors contracts.Fields) Exception {
+	return Exception{param, errors, "param validation failed"}
 }
 
-func (this ValidatorException) Error() (str string) {
-	for _, err := range this.errors {
-		if len(err[0]) > 0 {
-			return err[0]
-		}
-	}
-	return
+func (this Exception) Error() string {
+	return this.string
 }
 
-func (this ValidatorException) Fields() contracts.Fields {
+func (this Exception) Fields() contracts.Fields {
 	return this.param
 }
 
-func (this ValidatorException) GetErrors() contracts.ValidatedErrors {
+func (this Exception) GetErrors() contracts.Fields {
 	return this.errors
 }
