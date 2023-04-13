@@ -1,27 +1,24 @@
 package validation
 
 import (
+	"errors"
 	"github.com/goal-web/contracts"
 )
 
 type Exception struct {
-	param  contracts.Fields
-	errors contracts.Fields
-	string
+	Err    error
+	Param  contracts.Fields
+	Errors contracts.Fields
 }
 
-func NewException(param contracts.Fields, errors contracts.Fields) Exception {
-	return Exception{param, errors, "param validation failed"}
+func (e *Exception) Error() string {
+	return e.Err.Error()
 }
 
-func (this Exception) Error() string {
-	return this.string
+func (e *Exception) GetPrevious() contracts.Exception {
+	return nil
 }
 
-func (this Exception) Fields() contracts.Fields {
-	return this.param
-}
-
-func (this Exception) GetErrors() contracts.Fields {
-	return this.errors
+func NewException(param contracts.Fields, errs contracts.Fields) contracts.Exception {
+	return &Exception{Err: errors.New("param validation failed"), Param: param, Errors: errs}
 }

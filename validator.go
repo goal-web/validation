@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"errors"
 	"github.com/go-playground/validator/v10"
 	"github.com/goal-web/contracts"
 	"github.com/goal-web/supports/utils"
@@ -20,12 +21,12 @@ func Valid(data interface{}, rules contracts.Fields) contracts.Fields {
 		return Validator.ValidateMap(param.Fields(), rules)
 	}
 
-	fields, err := utils.ConvertToFields(data)
+	fields, err := utils.ToFields(data)
 	if err != nil {
 		panic(Exception{
-			param:  fields,
-			errors: nil,
-			string: "unsupported parameter type",
+			Param:  fields,
+			Errors: nil,
+			Err:    errors.New("unsupported parameter type"),
 		})
 	}
 
@@ -50,7 +51,7 @@ func VerifyStruct(data interface{}) {
 
 func Verify(data interface{}, rules contracts.Fields) {
 	if errs := Valid(data, rules); len(errs) > 0 {
-		var fields, _ = utils.ConvertToFields(data)
+		var fields, _ = utils.ToFields(data)
 		panic(NewException(fields, rules))
 	}
 }
