@@ -2,6 +2,7 @@ package validation
 
 import (
 	"errors"
+	"fmt"
 	"github.com/goal-web/contracts"
 )
 
@@ -12,7 +13,11 @@ type Exception struct {
 }
 
 func (e *Exception) Error() string {
-	return e.Err.Error()
+	msg := e.Err.Error()
+	for key, value := range e.Errors {
+		msg += fmt.Sprintf(". [%s]: %v", key, value)
+	}
+	return msg
 }
 
 func (e *Exception) GetPrevious() contracts.Exception {
