@@ -18,7 +18,7 @@ func Valid(data interface{}, rules contracts.Fields) contracts.Fields {
 	case contracts.Fields:
 		return Validator.ValidateMap(param, rules)
 	case contracts.FieldsProvider:
-		return Validator.ValidateMap(param.Fields(), rules)
+		return Validator.ValidateMap(param.ToFields(), rules)
 	}
 
 	fields, err := utils.ToFields(data)
@@ -34,12 +34,12 @@ func Valid(data interface{}, rules contracts.Fields) contracts.Fields {
 }
 
 func Form(validatable contracts.Validatable) contracts.Fields {
-	return Validator.ValidateMap(validatable.Fields(), validatable.Rules())
+	return Validator.ValidateMap(validatable.ToFields(), validatable.Rules())
 }
 
 func VerifyForm(validatable contracts.Validatable) {
 	if errs := Form(validatable); len(errs) > 0 {
-		panic(NewException(validatable.Fields(), validatable.Rules()))
+		panic(NewException(validatable.ToFields(), validatable.Rules()))
 	}
 }
 

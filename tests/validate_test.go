@@ -11,7 +11,7 @@ type Param struct {
 	fields contracts.Fields
 }
 
-func (p Param) Fields() contracts.Fields {
+func (p Param) ToFields() contracts.Fields {
 	return p.fields
 }
 
